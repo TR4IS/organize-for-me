@@ -26,6 +26,12 @@ All three must pass. Public items must be documented, or the build fails.
 - **Comments say why**, not what the next line does.
 - **Add a dependency only when it clearly earns its place**, and say why in the commit.
 
+## Testing screens
+
+`cargo run -p organize-for-me` runs the app. In debug builds, set `OFM_DATA_DIR` to a
+temporary folder to keep test receipts apart from your real ones. Screens contain no
+decisions, so a rule belongs in a Rust test, not a screen test.
+
 ## Adding a file type
 
 Add the extension to `bin_for_ext` in `kind.rs`, and its signature to `sniff` if it has a

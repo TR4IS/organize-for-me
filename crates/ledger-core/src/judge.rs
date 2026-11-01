@@ -117,6 +117,21 @@ pub enum Evidence {
     Nothing,
 }
 
+impl Evidence {
+    /// What this evidence adds to the confidence score.
+    pub fn points(&self) -> i32 {
+        match self {
+            Evidence::Contents(_) | Evidence::Package => POINTS_CONTENTS,
+            Evidence::Extension(_) => POINTS_EXTENSION,
+            Evidence::Site(_) => POINTS_SITE,
+            Evidence::LearnedChoice(_) => POINTS_CHOICE,
+            Evidence::LearnedVoid(_) => -POINTS_CHOICE,
+            Evidence::FolderSetting => POINTS_FOLDER_SETTING,
+            Evidence::Nothing => 0,
+        }
+    }
+}
+
 /// A note shown with the receipt item. It does not change the decision.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Note {

@@ -36,6 +36,13 @@ impl Memory {
             .insert((host.to_lowercase(), from), Learned::RouteTo(to));
     }
 
+    /// Every saved choice, for saving between runs.
+    pub fn entries(&self) -> impl Iterator<Item = (&str, Bin, Learned)> + '_ {
+        self.entries
+            .iter()
+            .map(|((host, bin), learned)| (host.as_str(), *bin, *learned))
+    }
+
     /// Forgets everything learned. Files are not touched.
     pub fn forget(&mut self) {
         self.entries.clear();

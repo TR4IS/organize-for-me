@@ -34,6 +34,11 @@ impl Bin {
         Bin::Random,
     ];
 
+    /// Finds a labeled folder by its name on disk.
+    pub fn from_folder(name: &str) -> Option<Bin> {
+        Bin::ALL.into_iter().find(|bin| bin.folder() == name)
+    }
+
     /// The folder name on disk.
     pub fn folder(self) -> &'static str {
         match self {

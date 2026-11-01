@@ -4,7 +4,7 @@ use crate::inspect::{InspectError, has_game_files, inspect};
 use crate::journal::Journal;
 use crate::mover::{MoveError, Moved, move_to};
 use ledger_core::guard::{Guard, guard_folder};
-use ledger_core::judge::{Decision, Options, Verdict, judge};
+use ledger_core::judge::{Decision, Facts, Options, Verdict, judge};
 use ledger_core::ledger::Status;
 use ledger_core::memory::Memory;
 use std::path::Path;
@@ -23,6 +23,8 @@ pub fn check_folder(folder: &Path) -> Guard {
 pub enum Sorted {
     /// It was judged, and any allowed move ran.
     Judged {
+        /// What was known about the item.
+        facts: Facts,
         /// The decision and its evidence.
         verdict: Verdict,
         /// The move, if one ran and succeeded.
@@ -43,6 +45,7 @@ impl Sorted {
                 verdict,
                 moved,
                 failure,
+                ..
             } => match (verdict.decision, moved, failure) {
                 (_, _, Some(_)) => Status::Fail,
                 (Decision::Move, Some(_), None) => Status::Moved,
@@ -76,6 +79,7 @@ pub fn sort_item(
     let verdict = judge(&facts, memory, options);
     if verdict.decision != Decision::Move {
         return Ok(Sorted::Judged {
+            facts,
             verdict,
             moved: None,
             failure: None,
@@ -84,11 +88,13 @@ pub fn sort_item(
     let dest = root.join(verdict.bin.folder());
     Ok(match move_to(item, &dest, journal) {
         Ok(moved) => Sorted::Judged {
+            facts,
             verdict,
             moved: Some(moved),
             failure: None,
         },
         Err(error) => Sorted::Judged {
+            facts,
             verdict,
             moved: None,
             failure: Some(error),

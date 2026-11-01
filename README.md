@@ -3,8 +3,19 @@
 A Windows app that sorts your downloads into folders and shows every move on a
 receipt. It never deletes a file, never overwrites one, and every move can be put back.
 
-**Status: early development, not released.** The decision rules and the safe file
-mover work and are tested. There is no app window, folder watcher or AI connection yet.
+**Status: alpha, not released.** The app runs and sorts real files. There is no
+installer, update check or AI connection yet.
+
+## Run the app
+
+You need [Rust](https://rustup.rs) and Windows, with WebView2 (included in Windows 11).
+
+```bash
+cargo run -p organize-for-me
+```
+
+Only files that arrive after you press Start are sorted. Files already in the folder
+stay where they are.
 
 ## Run the tests
 

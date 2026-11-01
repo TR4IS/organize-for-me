@@ -2,12 +2,16 @@
 
 People lost games and files to an earlier app of mine, so these promises come first.
 A change that weakens one needs a very good reason and a new test.
-All tests named here are in `crates/ledger-platform/tests/safety.rs` unless noted.
+Tests named here are in `crates/ledger-platform/tests/` and `app/src/engine.rs`, unless noted.
 
 ## The promises
 
 | Promise | How the code keeps it | Tests |
 |---|---|---|
+| Moves only new files | Everything present at start, after a pause, or when a lost folder returns is never reported | `files_already_in_the_folder_are_never_reported`, `rebaseline_forgets_what_arrived_during_a_pause`, `files_already_there_stay_and_new_ones_move`, `a_lost_folder_is_reported_and_nothing_counts_as_new_after_it_returns` |
+| Waits for downloads to finish | A new item must stop changing, have no `.part` or `.crdownload` partner, and not be open | `a_growing_file_is_not_reported_until_it_stops`, `the_placeholder_of_a_running_download_waits_for_it`, `a_file_being_written_is_not_moved` |
+| A file put back stays back | The watcher is told to accept it | `a_voided_file_is_not_sorted_again` |
+| A blocked folder cannot be chosen | The engine refuses it, whatever the screens send | `a_blocked_folder_cannot_be_chosen`, `a_risky_folder_needs_the_risk_accepted` |
 | Never overwrites a file | `MoveFileExW` without `MOVEFILE_REPLACE_EXISTING` | `a_taken_name_is_never_replaced`, `a_name_differing_only_by_letter_case_is_not_replaced`, `many_files_with_one_name_all_survive` |
 | Never deletes a file | No delete call exists, and `clippy.toml` fails the build on one | Linter, run on every change |
 | Never copies across drives | `MoveFileExW` without `MOVEFILE_COPY_ALLOWED` | `another_drive_is_refused_and_the_file_stays` |
@@ -28,8 +32,15 @@ All tests named here are in `crates/ledger-platform/tests/safety.rs` unless note
 - **The disk itself can fail.** The app cannot protect against failing hardware.
 - **File type checks are not antivirus.** Holding a disguised program is a warning,
   and a file that reaches `exe/` is not proven safe.
-- **The journal assumes one running app.** Stopping a second copy is the app's job,
-  and that app does not exist yet.
+- **The journal assumes one running app.** The single-instance plugin enforces this.
+  If that ever fails, two copies could write one journal, though neither could overwrite a file.
+- **The file type check is not complete.** A file that sniffs as nothing is sorted by its
+  extension alone.
+
+## The one exception to "all disk changes go through the mover"
+
+`app/src/store.rs` replaces `state.json` in the app's own data folder. It has a linter
+exemption for this, and it never receives a path from outside that folder.
 
 ## Not tested on real hardware
 

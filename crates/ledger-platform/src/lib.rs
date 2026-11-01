@@ -14,3 +14,4 @@ pub mod inspect;
 pub mod journal;
 pub mod mover;
 pub mod sort;
+pub mod watch;
