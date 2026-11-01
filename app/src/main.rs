@@ -22,6 +22,7 @@ use tauri_plugin_dialog::DialogExt;
 
 const WINDOW_WIDTH: f64 = 328.0;
 const TICK: Duration = Duration::from_millis(500);
+const SHOW_FALLBACK: Duration = Duration::from_secs(5);
 const REPO_URL: &str = "https://github.com/TR4IS/FileOrganizer";
 
 struct Shared(Mutex<Engine>);
@@ -211,6 +212,12 @@ fn keep_on_screen(window: &WebviewWindow, height: f64) {
     }
 }
 
+/// Shows the window once the screens have drawn, so it never opens at the wrong size.
+#[tauri::command]
+fn show_window(app: AppHandle) {
+    show_main(&app);
+}
+
 #[tauri::command]
 fn start_drag(window: WebviewWindow) {
     let _ = window.start_dragging();
@@ -299,6 +306,17 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     }
     tray.build(app)?;
 
+    // If the screens ever fail to load, the window must still appear.
+    let fallback = handle.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(SHOW_FALLBACK);
+        if let Some(window) = fallback.get_webview_window("main")
+            && !window.is_visible().unwrap_or(true)
+        {
+            show_main(&fallback);
+        }
+    });
+
     let ticker = handle.clone();
     std::thread::spawn(move || {
         let started = Instant::now();
@@ -362,6 +380,7 @@ fn main() {
             set_startup,
             open_repo,
             set_window_height,
+            show_window,
             start_drag,
             close_window
         ])

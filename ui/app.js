@@ -304,10 +304,12 @@ function draw() {
     guideWin.style.height = '1px';
     const end = app.querySelector('.panel').lastElementChild.getBoundingClientRect().bottom - guideWin.getBoundingClientRect().top;
     guideWin.style.height = (S.guideH || GUIDE_H) + 'px'; void guideWin.offsetHeight;
-    guideWin.style.transition = '';
+    // The first draw opens at its size. Only later steps animate from the old height.
+    if (S.guideH) guideWin.style.transition = '';
     const to = Math.ceil(end + 12 + edge);
     if (S.guideH && S.guideH !== to && !reduce) { guideWin.style.height = S.guideH + 'px'; void guideWin.offsetHeight; }
     guideWin.style.height = to + 'px';
+    if (!S.guideH) { void guideWin.offsetHeight; guideWin.style.transition = ''; }
     S.guideH = to;
   } else S.guideH = null;
   if (gliding) { const el = app.querySelector(gliding.panel ? '.panel' : '.roll'); if (el) startGlide(el, gliding.to + el.scrollTop - gliding.from); }
@@ -519,7 +521,8 @@ function syncWindow() {
 }
 new ResizeObserver(syncWindow).observe(app);
 (async () => {
-  await document.fonts.ready;
+  // Fonts load only when first used, and the guide measures its text, so load them first.
+  await Promise.all(['400 13px "JetBrains Mono"', '700 13px "JetBrains Mono"', '800 13px "JetBrains Mono"', '400 14px "IBM Plex Sans Arabic"', '700 14px "IBM Plex Sans Arabic"', '400 13px "Courier Prime"', '700 13px "Courier Prime"', '400 16px "VT323"'].map(f => document.fonts.load(f, 'A\u0628'))).catch(() => {});
   const loaded = await invoke('load');
   S.version = loaded.version; S.choices = loaded.choices;
   applyState(loaded.state);
@@ -527,6 +530,8 @@ new ResizeObserver(syncWindow).observe(app);
   if (S.cfg.height > avail) S.cfg.height = avail;
   if (!S.cfg.welcomed) await openWizard(0, false);
   draw();
+  syncWindow();
+  invoke('show_window');
   window.__TAURI__.event.listen('changed', async e => {
     applyState(e.payload);
     if (!S.past) draw();
