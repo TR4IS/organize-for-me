@@ -306,8 +306,12 @@ button:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
 .set:hover { background: var(--hover); }
 .set b { font-weight: 800; }
 .note { color: var(--dim); padding: 5px 0; }
-/* The window itself is the receipt. These two papers punch holes, so they keep a dark desk. */
-.win.green, .win.carbon { --desk: #15141d; }
+/* The window itself is the receipt, so paper stops at the edges and the cuts are real gaps. */
+.win { background: linear-gradient(var(--paper), var(--paper)) 0 var(--edge) / 100% calc(100% - 2 * var(--edge)) no-repeat; }
+/* Green bar: real punched holes down both sides. Its top and bottom dashes stay printed. */
+.win.green { --desk: #26332b; background: var(--paper);
+  -webkit-mask: radial-gradient(circle at 10px 12px, transparent 5px, #000 5.5px) left top / 20px 24px repeat-y, radial-gradient(circle at 10px 12px, transparent 5px, #000 5.5px) right top / 20px 24px repeat-y, linear-gradient(#000, #000) center / calc(100% - 40px) 100% no-repeat;
+  mask: radial-gradient(circle at 10px 12px, transparent 5px, #000 5.5px) left top / 20px 24px repeat-y, radial-gradient(circle at 10px 12px, transparent 5px, #000 5.5px) right top / 20px 24px repeat-y, linear-gradient(#000, #000) center / calc(100% - 40px) 100% no-repeat; }
 .win.full { height: auto; }
 .bar { user-select: none; }
 /* Long paths keep their end, because the folder name is the part that matters. */

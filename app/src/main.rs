@@ -14,7 +14,9 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, LogicalSize, Manager, State, WebviewWindow, WindowEvent};
+use tauri::{
+    AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, State, WebviewWindow, WindowEvent,
+};
 use tauri_plugin_autostart::ManagerExt as _;
 use tauri_plugin_dialog::DialogExt;
 
@@ -191,6 +193,22 @@ fn open_repo() {
 #[tauri::command]
 fn set_window_height(height: f64, window: WebviewWindow) {
     let _ = window.set_size(LogicalSize::new(WINDOW_WIDTH, height));
+    keep_on_screen(&window, height);
+}
+
+/// Moves the window up if its bottom edge would sit behind the taskbar or off the screen.
+fn keep_on_screen(window: &WebviewWindow, height: f64) {
+    let (Ok(Some(monitor)), Ok(position)) = (window.current_monitor(), window.outer_position())
+    else {
+        return;
+    };
+    let area = monitor.work_area();
+    let physical_height = (height * monitor.scale_factor()).ceil() as i32;
+    let bottom = area.position.y + area.size.height as i32;
+    let y = (bottom - physical_height).max(area.position.y);
+    if position.y > y {
+        let _ = window.set_position(PhysicalPosition::new(position.x, y));
+    }
 }
 
 #[tauri::command]
