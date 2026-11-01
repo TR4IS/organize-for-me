@@ -318,5 +318,16 @@ button:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
 .win .path, .win[dir="rtl"] .path { direction: rtl; text-align: left; }
 .panel:not([data-panel="welcome"]) { padding-bottom: 0; }
 .panel:not([data-panel="welcome"]) > .acts { padding-bottom: 12px; margin-bottom: 0; }
+/* Real cuts, each following its paper's design. The solid part of each edge touches the paper. */
+.win.green { --desk: transparent; background: linear-gradient(var(--paper), var(--paper)) 0 var(--edge) / 100% calc(100% - 2 * var(--edge)) no-repeat; }
+.win.green .edge { background: repeating-linear-gradient(90deg, transparent 0 5px, var(--paper) 5px 9px) 0 100% / 100% 3px no-repeat, linear-gradient(var(--paper), var(--paper)) 0 0 / 100% calc(100% - 3px) no-repeat; }
+.win.green .edge.t { transform: scaleY(-1); }
+.win.book .edge { background: repeating-linear-gradient(var(--paper) 0 2px, transparent 2px 3px); }
+.win.book .edge.t { transform: none; background: repeating-linear-gradient(90deg, #7f2a2a 0 8px, transparent 8px 16px) 0 0 / 100% 5px no-repeat, linear-gradient(#7f2a2a, #7f2a2a) 0 5px / 100% calc(100% - 5px) no-repeat; }
+.win.national .edge, .win.founding .edge { transform: none; }
+.win.national .edge.t, .win.founding .edge.t { transform: scaleY(-1); }
+.win.national .edge { background: linear-gradient(135deg, var(--fest) 50%, transparent 0) 0 0 / 14px 14px repeat-x, linear-gradient(225deg, var(--fest) 50%, transparent 0) 0 0 / 14px 14px repeat-x; }
+.win.founding .edge { background: linear-gradient(var(--fest), var(--fest)) 0 0 / 100% 4px no-repeat, linear-gradient(90deg, var(--fest) 0 10px, transparent 10px 20px) 0 4px / 20px 8px repeat-x; }
+.win.national::after, .win.founding::after { inset: var(--edge) 0; }
 .problem { flex: none; border: 2px solid var(--void); color: var(--void); margin: 6px 0 2px; padding: 5px 8px; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .new { animation: none; } }
