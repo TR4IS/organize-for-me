@@ -1,0 +1,13 @@
+[package]
+name = "ledger-platform"
+description = "The only part of Organize for Me that touches files. Windows only for now."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+ledger-core = { path = "../ledger-core" }
+
+[lints]
+workspace = true

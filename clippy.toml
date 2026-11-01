@@ -1,0 +1,11 @@
+# The app promises it cannot delete or overwrite a file. These are the standard
+# library calls that could break that promise, so using one fails the build.
+disallowed-methods = [
+    { path = "std::fs::remove_file", reason = "the app never deletes; see SAFETY.md" },
+    { path = "std::fs::remove_dir", reason = "the app never deletes; see SAFETY.md" },
+    { path = "std::fs::remove_dir_all", reason = "the app never deletes; see SAFETY.md" },
+    { path = "std::fs::rename", reason = "it replaces existing files; use mover::move_to" },
+    { path = "std::fs::copy", reason = "it replaces existing files; use mover::move_to" },
+    { path = "std::fs::write", reason = "it replaces existing files; the app never writes to user files" },
+    { path = "std::fs::File::create", reason = "it empties existing files; the app never writes to user files" },
+]
