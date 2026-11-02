@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   release:
+    # Stays off until SignPath is set up, see RELEASING.md.
+    if: vars.SIGNPATH_ORGANIZATION_ID != ''
     runs-on: windows-latest
     # No build cache: SignPath must be able to trust that this binary came from this source.
     steps:

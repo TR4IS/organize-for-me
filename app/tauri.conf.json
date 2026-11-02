@@ -32,6 +32,16 @@
     "publisher": "TR4IS",
     "shortDescription": "Sorts your downloads into folders and shows every move on a receipt.",
     "icon": ["icons/icon.ico", "icons/icon.png"],
+    "license": "MIT",
+    "licenseFile": "../LICENSE",
+    "resources": {
+      "../LICENSE": "licenses/LICENSE.txt",
+      "../THIRD-PARTY-LICENSES.html": "licenses/THIRD-PARTY-LICENSES.html",
+      "../ui/fonts/LICENSE-courier-prime.txt": "licenses/LICENSE-courier-prime.txt",
+      "../ui/fonts/LICENSE-ibm-plex-sans-arabic.txt": "licenses/LICENSE-ibm-plex-sans-arabic.txt",
+      "../ui/fonts/LICENSE-jetbrains-mono.txt": "licenses/LICENSE-jetbrains-mono.txt",
+      "../ui/fonts/LICENSE-vt323.txt": "licenses/LICENSE-vt323.txt"
+    },
     "windows": {
       "webviewInstallMode": { "type": "downloadBootstrapper", "silent": true },
       "nsis": {

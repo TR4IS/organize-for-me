@@ -196,7 +196,7 @@ fn open_releases() {
     let _ = Command::new("rundll32")
         .args([
             "url.dll,FileProtocolHandler",
-            &format!("{REPO_URL}/releases/latest"),
+            &format!("{REPO_URL}/releases"),
         ])
         .spawn();
 }

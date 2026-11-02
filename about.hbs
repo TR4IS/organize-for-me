@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Third-party licenses</title>
+<style>body{font:14px/1.5 system-ui,sans-serif;max-width:800px;margin:2em auto;padding:0 1em}pre{white-space:pre-wrap;background:#f4f4f4;padding:1em;overflow-x:auto}</style></head>
+<body>
+<h1>Third-party licenses</h1>
+<p>Organize for Me is MIT licensed and includes the open source software below.
+Its bundled fonts use the SIL Open Font License. Their license files sit next to this one.</p>
+{{#each licenses}}
+<h2>{{name}}</h2>
+<p>Used by:
+{{#each used_by}}<a href="{{#if crate.repository}}{{crate.repository}}{{else}}https://crates.io/crates/{{crate.name}}{{/if}}">{{crate.name}} {{crate.version}}</a>{{#unless @last}}, {{/unless}}{{/each}}</p>
+<pre>{{text}}</pre>
+{{/each}}
+</body>
+</html>

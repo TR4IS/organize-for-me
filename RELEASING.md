@@ -17,9 +17,17 @@
 ## Each release
 
 1. Set the same version in `app/tauri.conf.json` and `app/Cargo.toml`.
+   If a dependency changed, run `cargo about generate about.hbs -o THIRD-PARTY-LICENSES.html`.
 2. Commit, then tag it `v` plus that version, and push the tag.
 3. Approve the signing request in SignPath. The workflow waits up to 6 hours.
 4. Check the draft release on GitHub, then publish it.
+
+## Before the first stable 3.x release
+
+Version 2 installs updates by itself from the newest release that is not a pre-release.
+Mark every 3.x beta as a pre-release, so version 2 users are left alone. Before a stable
+3.x, decide how they should move over, because version 2 expects files this app does not
+publish. `docs/version.json` also belongs to version 2, so leave it in place.
 
 ## What gets signed
 
