@@ -2315,7 +2315,7 @@ dependencies = [
 
 [[package]]
 name = "organize-for-me"
-version = "3.0.0-alpha.1"
+version = "3.0.0-beta.1"
 dependencies = [
  "ledger-core",
  "ledger-platform",
