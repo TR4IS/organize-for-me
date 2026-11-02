@@ -8,8 +8,8 @@ use ledger_core::judge::{
 };
 use ledger_core::kind::Bin;
 use ledger_core::memory::Memory;
-use ledger_platform::inspect::{InspectError, inspect};
-use ledger_platform::journal::{Journal, Recovered};
+use ledger_platform::inspect::{InspectError, free_bytes, inspect};
+use ledger_platform::journal::{Action, Journal, Recovered};
 use ledger_platform::mover::{MoveError, move_to, put_back};
 use ledger_platform::sort::{FolderBlocked, Sorted, sort_item};
 use ledger_platform::watch::Watcher;
@@ -25,6 +25,11 @@ const WAIT_RETRY_MS: u64 = 3000;
 const PREVIEW_LIMIT: usize = 8;
 /// How many items a first-run preview counts.
 const PREVIEW_SCAN_LIMIT: usize = 5000;
+/// Below this much space on the app's own drive, sorting waits. A move itself needs
+/// almost no space, but the records of it do, and no move goes unrecorded.
+const MIN_FREE_BYTES: u64 = 5 * 1024 * 1024;
+const HOLD_DISK_FULL: &str = "disk is almost full, sorting waits";
+const HOLD_CANNOT_SAVE: &str = "cannot save records, sorting waits";
 
 /// One line on the receipt.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -127,6 +132,9 @@ pub struct Engine {
     problem: Option<String>,
     folder_lost: bool,
     last_wait_retry: u64,
+    save_failed: bool,
+    last_save_retry: u64,
+    hold: Option<&'static str>,
 }
 
 impl Engine {
@@ -164,8 +172,12 @@ impl Engine {
             problem: None,
             folder_lost: false,
             last_wait_retry: 0,
+            save_failed: false,
+            last_save_retry: 0,
+            hold: None,
         };
         engine.recover()?;
+        engine.settle_voids();
         engine.log("SYS", "", "started", None);
         if engine.welcomed() && !engine.paused {
             engine.start_watcher();
@@ -185,7 +197,7 @@ impl Engine {
             history: self.history.clone(),
             paused: self.paused,
             learned: self.memory.len(),
-            problem: self.problem.clone(),
+            problem: self.hold.map(String::from).or_else(|| self.problem.clone()),
             cfg: self.cfg.clone(),
         }
     }
@@ -436,9 +448,16 @@ impl Engine {
 
     /// Runs one watching step. Returns true when the screens need to redraw.
     pub fn tick(&mut self, now_ms: u64) -> bool {
-        let mut changed = false;
-        let Some(mut watcher) = self.watcher.take() else {
+        if self.watcher.is_none() {
             return false;
+        }
+        let mut changed = self.update_hold(now_ms);
+        if self.hold.is_some() {
+            // The files stay where they are and are sorted once records can be kept again.
+            return changed;
+        }
+        let Some(mut watcher) = self.watcher.take() else {
+            return changed;
         };
         if self.folder_lost {
             // Whatever is there now may be a different disk, so nothing counts as new.
@@ -664,7 +683,25 @@ impl Engine {
         Ok(())
     }
 
-    fn save(&self) {
+    /// The journal outranks the saved receipt. A void that happened just before a crash,
+    /// or while the disk was full, is in the journal even if the receipt never saved it.
+    fn settle_voids(&mut self) {
+        for record in self.journal.completed() {
+            let Action::Undo(of) = record.action else {
+                continue;
+            };
+            if let Some(item) = self
+                .items
+                .iter_mut()
+                .find(|i| i.status == "moved" && i.seq == Some(of))
+            {
+                item.status = "void".into();
+                item.path = record.to.clone();
+            }
+        }
+    }
+
+    fn save(&mut self) {
         let memory = store::export_memory(&self.memory);
         let saved = Saved {
             cfg: self.cfg.clone(),
@@ -678,7 +715,31 @@ impl Engine {
             paused: self.paused,
             memory,
         };
-        store::save_state(&self.dir, &saved);
+        self.save_failed = store::save_state(&self.dir, &saved).is_err();
+    }
+
+    /// Decides if sorting must wait because the app could not record what it does.
+    /// Returns true when that answer changed.
+    fn update_hold(&mut self, now_ms: u64) -> bool {
+        if self.save_failed && now_ms.saturating_sub(self.last_save_retry) >= WAIT_RETRY_MS {
+            self.last_save_retry = now_ms;
+            self.save();
+        }
+        let hold = if self.save_failed {
+            Some(HOLD_CANNOT_SAVE)
+        } else if free_bytes(&self.dir).is_some_and(|free| free < MIN_FREE_BYTES) {
+            Some(HOLD_DISK_FULL)
+        } else {
+            None
+        };
+        if hold == self.hold {
+            return false;
+        }
+        self.hold = hold;
+        if let Some(reason) = hold {
+            self.log("FAIL", "", reason, None);
+        }
+        true
     }
 }
 
@@ -1025,6 +1086,55 @@ mod tests {
         assert!(lab.watched.join("pdf").join("new.pdf").exists());
         assert_eq!(engine.items[0].status, "moved");
         assert!(old.exists());
+    }
+
+    #[test]
+    fn nothing_moves_while_records_cannot_be_saved() {
+        let lab = Lab::new();
+        let mut engine = lab.engine();
+        let mut clock = 0;
+        run(&mut engine, &mut clock);
+
+        // A folder in the temporary file's place makes every save fail, as a full disk would.
+        let block = lab.base.join("data").join("state.tmp");
+        std::fs::create_dir(&block).unwrap();
+        engine.save();
+        let file = lab.file("waits.pdf", b"%PDF-");
+        clock += 10_000;
+        run(&mut engine, &mut clock);
+        assert!(file.exists(), "no move may happen without a record");
+        assert_eq!(engine.snapshot().problem.as_deref(), Some(HOLD_CANNOT_SAVE));
+
+        std::fs::remove_dir(&block).unwrap();
+        clock += 10_000;
+        run(&mut engine, &mut clock);
+        run(&mut engine, &mut clock);
+        assert!(lab.watched.join("pdf").join("waits.pdf").exists());
+        assert_eq!(engine.snapshot().problem, None);
+        let saved = store::load_state(&lab.base.join("data"));
+        assert_eq!(saved.items[0].shown, "waits.pdf");
+    }
+
+    #[test]
+    fn a_void_the_receipt_never_saved_is_still_shown_after_a_restart() {
+        let lab = Lab::new();
+        let mut engine = lab.engine();
+        let mut clock = 0;
+        run(&mut engine, &mut clock);
+        let file = lab.file("back.pdf", b"%PDF-");
+        run(&mut engine, &mut clock);
+        let id = engine.items[0].id;
+
+        let block = lab.base.join("data").join("state.tmp");
+        std::fs::create_dir(&block).unwrap();
+        engine.void_item(id);
+        assert!(file.exists());
+        drop(engine);
+        std::fs::remove_dir(&block).unwrap();
+
+        let engine = Engine::open(&lab.base.join("data")).unwrap();
+        assert_eq!(engine.items[0].status, "void");
+        assert_eq!(file_name(&engine.items[0].path), "back.pdf");
     }
 
     #[test]

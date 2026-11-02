@@ -19,6 +19,7 @@ Tests named here are in `crates/ledger-platform/tests/` and `app/src/engine.rs`,
 | Every move can be put back | The journal records it, and the undo cannot replace a file either | `void_puts_the_file_back`, `void_never_replaces_a_new_file_in_the_original_spot`, `a_void_can_be_undone_after_restarting_the_app` |
 | A crash loses nothing | The intent reaches the disk before the move, and recovery checks the disk | `crash_before_the_rename_finds_the_file_unmoved`, `crash_after_the_rename_finds_the_file_moved_and_undoable`, `a_half_written_journal_line_is_ignored_and_later_writes_are_safe` |
 | No record, no move | A failed journal write stops the move before it starts | `no_move_starts_if_the_journal_cannot_be_written` |
+| Sorting waits on a full disk | Under 5 MB free, or when records cannot be saved, files stay put and a message shows until there is room | `nothing_moves_while_records_cannot_be_saved`, plus a real full disk test before each release |
 | Stays out of games and system folders | The folder guard, checked again before each item | `a_folder_holding_game_files_is_refused_and_nothing_moves`, `a_canonical_path_to_windows_is_blocked`, plus `guard.rs` |
 | Leaves fragile items alone | Shortcuts, hidden files, unfinished downloads, links and files in use | `shortcuts_and_unfinished_downloads_stay`, `hidden_files_stay`, `a_link_is_never_moved`, `a_file_being_written_is_not_moved` |
 | Does not sort disguised programs | They are held until the user decides, and learned choices cannot clear them | `a_disguised_program_is_held_where_it_is`, plus `judge.rs` |
@@ -44,7 +45,6 @@ exemption for this, and it never receives a path from outside that folder.
 
 ## Not tested on real hardware
 
-- **A full disk:** the error is mapped and unit tested, but no test fills a real drive.
-- **A network folder or an unplugged drive:** these are untested so far.
+- **An unplugged drive:** a lost folder is unit tested, but no real drive was pulled.
 - **Real power loss:** crash tests recreate the journal and disk as they would stand
   after a crash, without cutting power.

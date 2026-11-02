@@ -26,6 +26,34 @@ const GAME_FILES: [&str; 6] = [
     "eossdk-win64-shipping.dll",
 ];
 
+#[link(name = "kernel32")]
+unsafe extern "system" {
+    fn GetDiskFreeSpaceExW(
+        path: *const u16,
+        free_to_caller: *mut u64,
+        total: *mut u64,
+        total_free: *mut u64,
+    ) -> i32;
+}
+
+/// Free space on the drive holding `path`, or `None` if Windows cannot say.
+pub fn free_bytes(path: &Path) -> Option<u64> {
+    use std::os::windows::ffi::OsStrExt;
+    let wide: Vec<u16> = path.as_os_str().encode_wide().chain([0]).collect();
+    let mut free = 0;
+    // SAFETY: `wide` is null terminated and outlives the call, `free` is a valid
+    // place to write, and Windows allows the other two pointers to be null.
+    let ok = unsafe {
+        GetDiskFreeSpaceExW(
+            wide.as_ptr(),
+            &raw mut free,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+        )
+    };
+    (ok != 0).then_some(free)
+}
+
 /// Why an item could not be read.
 #[derive(Debug)]
 pub enum InspectError {

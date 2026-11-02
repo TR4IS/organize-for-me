@@ -192,6 +192,16 @@ fn open_repo() {
 }
 
 #[tauri::command]
+fn open_releases() {
+    let _ = Command::new("rundll32")
+        .args([
+            "url.dll,FileProtocolHandler",
+            &format!("{REPO_URL}/releases/latest"),
+        ])
+        .spawn();
+}
+
+#[tauri::command]
 fn set_window_height(height: f64, window: WebviewWindow) {
     let _ = window.set_size(LogicalSize::new(WINDOW_WIDTH, height));
     keep_on_screen(&window, height);
@@ -379,6 +389,7 @@ fn main() {
             show_item,
             set_startup,
             open_repo,
+            open_releases,
             set_window_height,
             show_window,
             start_drag,

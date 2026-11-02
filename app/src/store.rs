@@ -9,8 +9,8 @@ use ledger_core::kind::Bin;
 use ledger_core::memory::{Learned, Memory};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use std::fs::{self, OpenOptions};
-use std::io::Write;
+use std::fs::{self, File, OpenOptions};
+use std::io::{self, Write};
 use std::path::Path;
 
 const STATE_FILE: &str = "state.json";
@@ -67,15 +67,23 @@ pub fn load_state(dir: &Path) -> Saved {
     }
 }
 
-/// Saves state through a temporary file, so a crash cannot leave a half-written one.
-pub fn save_state(dir: &Path, saved: &Saved) {
-    let Ok(text) = serde_json::to_string(saved) else {
-        return;
-    };
+/// Saves state through a temporary file, so a crash or a full disk cannot leave a
+/// half-written one. The data reaches the disk before the rename, or a power cut could
+/// leave an empty `state.json`.
+pub fn save_state(dir: &Path, saved: &Saved) -> io::Result<()> {
+    let text = serde_json::to_string(saved)?;
     let temp = dir.join("state.tmp");
-    if fs::write(&temp, text).is_ok() {
-        let _ = fs::rename(&temp, dir.join(STATE_FILE));
+    let result = write_synced(&temp, &text).and_then(|()| fs::rename(&temp, dir.join(STATE_FILE)));
+    if result.is_err() {
+        let _ = fs::remove_file(&temp);
     }
+    result
+}
+
+fn write_synced(path: &Path, text: &str) -> io::Result<()> {
+    let mut file = File::create(path)?;
+    file.write_all(text.as_bytes())?;
+    file.sync_all()
 }
 
 /// Adds one line to the log file.

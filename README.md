@@ -4,8 +4,9 @@ A Windows app that sorts your downloads into folders and shows every move on a
 receipt. It never deletes a file, never overwrites one, and every move can be put back.
 
 **Status: beta, not released.** The app runs, sorts real files and has an installer.
-There is no update check or AI connection yet, and the installer is not code signed,
-so Windows may warn before running it.
+It can check GitHub for a new version and open its page, but never downloads by itself.
+There is no AI connection yet, and the installer is not code signed, so Windows may
+warn before running it.
 
 ## Build the installer
 
