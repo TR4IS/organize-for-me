@@ -4,9 +4,9 @@ A Windows app that sorts your downloads into folders and shows every move on a
 receipt. It never deletes a file, never overwrites one, and every move can be put back.
 
 **Status: beta, not released.** The app runs, sorts real files and has an installer.
-It can check GitHub for a new version and open its page, but never downloads by itself.
-There is no AI connection yet, and the installer is not code signed, so Windows may
-warn before running it.
+It can check GitHub for a new version when you ask, or at each start if you turn that
+on, and it only opens the release page. There is no AI connection yet. Signing is set
+up but has not been approved yet, so Windows may warn before running the installer.
 
 ## Build the installer
 
@@ -50,6 +50,25 @@ cargo clippy --workspace --all-targets
 
 The tests only touch temporary folders under `target\tmp`. If a second drive is
 available, one test also creates and removes a temporary folder on it.
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
+[SignPath Foundation](https://signpath.org).
+
+- Committers and reviewers: [TR4IS](https://github.com/TR4IS)
+- Approvers: [TR4IS](https://github.com/TR4IS)
+
+Privacy: this program will not transfer any information to other networked systems
+unless specifically requested by the user or the person installing or operating it.
+The update check is off by default. When used, it asks GitHub for the latest release,
+and [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement) applies to that request.
+
+See [RELEASING.md](RELEASING.md) for how a release is built and signed.
+
+## License
+
+[MIT](LICENSE).
 
 ## Where to read next
 
