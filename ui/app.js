@@ -220,7 +220,7 @@ function rollHtml() {
 const filesLabel = (n, s) => ltr(count(n)) + ' ' + (n === 1 ? L().file : L().files) + ' / ' + ltr(size(s));
 function setRow(label, value, key) { return '<button type="button" class="set" data-tip="' + key + '" data-set="' + key + '"><span>' + label + '</span><b>[ ' + value + ' ]</b></button>'; }
 /* Updates: asks GitHub for the latest release and only ever opens its page. Nothing downloads by itself. */
-const RELEASES_API = 'https://api.github.com/repos/TR4IS/FileOrganizer/releases?per_page=1';
+const RELEASES_API = 'https://api.github.com/repos/TR4IS/organize-for-me/releases?per_page=1';
 function isNewer(tag, current) {
   const parse = v => { const [main, pre] = String(v).replace(/^v/, '').split('-'); return { n: main.split('.').map(Number), pre }; };
   const a = parse(tag), b = parse(current);

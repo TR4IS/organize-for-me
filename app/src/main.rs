@@ -23,7 +23,7 @@ use tauri_plugin_dialog::DialogExt;
 const WINDOW_WIDTH: f64 = 328.0;
 const TICK: Duration = Duration::from_millis(500);
 const SHOW_FALLBACK: Duration = Duration::from_secs(5);
-const REPO_URL: &str = "https://github.com/TR4IS/FileOrganizer";
+const REPO_URL: &str = "https://github.com/TR4IS/organize-for-me";
 
 struct Shared(Mutex<Engine>);
 

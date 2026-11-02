@@ -9,12 +9,12 @@
 **Sorts your downloads into folders and prints every move on a receipt.**<br>
 It never deletes a file, never overwrites one, and every move can be put back.
 
-[![Latest beta](https://img.shields.io/github/v/release/TR4IS/FileOrganizer?include_prereleases&style=flat-square&label=beta)](https://github.com/TR4IS/FileOrganizer/releases)
+[![Latest beta](https://img.shields.io/github/v/release/TR4IS/organize-for-me?include_prereleases&style=flat-square&label=beta)](https://github.com/TR4IS/organize-for-me/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078d4?style=flat-square)](#install)
 [![Built with Rust](https://img.shields.io/badge/Built%20with-Rust-b7410e?style=flat-square)](ARCHITECTURE.md)
 
-[Download](https://github.com/TR4IS/FileOrganizer/releases) · [How to use it](#how-to-use-it) · [Safety](#safety) · [Build it](#build-from-source)
+[Download](https://github.com/TR4IS/organize-for-me/releases) · [How to use it](#how-to-use-it) · [Safety](#safety) · [Build it](#build-from-source)
 
 <img src="docs/images/receipt.png" alt="The receipt, listing sorted files by time, with totals per folder" width="300">
 
@@ -23,7 +23,7 @@ It never deletes a file, never overwrites one, and every move can be put back.
 > [!NOTE]
 > **This is a beta, and a full rewrite of FileOrganizer in Rust.** The installer is not code
 > signed yet, so Windows may warn before running it. The last Electron version remains
-> available as [v2.1.0](https://github.com/TR4IS/FileOrganizer/releases/tag/v2.1.0).
+> available as [v2.1.0](https://github.com/TR4IS/organize-for-me/releases/tag/v2.1.0).
 
 ## Why a receipt?
 
@@ -64,7 +64,7 @@ balance.
 
 ## Install
 
-1. Download the installer from [Releases](https://github.com/TR4IS/FileOrganizer/releases).
+1. Download the installer from [Releases](https://github.com/TR4IS/organize-for-me/releases).
 2. Run it. It needs no administrator rights. If Windows warns you, choose **More info**, then **Run anyway**.
 
 It needs Windows 10 or 11 and Microsoft WebView2, which the installer sets up if it is missing.
