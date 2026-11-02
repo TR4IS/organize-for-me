@@ -1224,8 +1224,10 @@ mod tests {
     fn a_risky_folder_needs_the_risk_accepted() {
         let lab = Lab::new();
         let mut engine = lab.engine();
-        let path = lab.watched.to_str().unwrap().to_string();
-        // The test folder sits under Documents, which the guard treats as risky.
+        // The guard treats anything under OneDrive as risky, wherever the code is checked out.
+        let risky = lab.base.join("OneDrive");
+        std::fs::create_dir_all(&risky).unwrap();
+        let path = risky.to_str().unwrap().to_string();
         assert_eq!(folder_choice(&path).level, "warn");
         assert!(engine.choose_folder(&path, false).is_err());
         assert!(engine.choose_folder(&path, true).is_ok());
