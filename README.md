@@ -14,7 +14,7 @@ It never deletes a file, never overwrites one, and every move can be put back.
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078d4?style=flat-square)](#install)
 [![Built with Rust](https://img.shields.io/badge/Built%20with-Rust-b7410e?style=flat-square)](ARCHITECTURE.md)
 
-[Download](https://github.com/TR4IS/organize-for-me/releases) · [How to use it](#how-to-use-it) · [Safety](#safety) · [Build it](#build-from-source)
+[Homepage](https://n3trunner.dev/organizeforme) · [Download](https://github.com/TR4IS/organize-for-me/releases) · [How to use it](#how-to-use-it) · [Safety](#safety) · [Build it](#build-from-source)
 
 <img src="docs/images/receipt.png" alt="The receipt, listing sorted files by time, with totals per folder" width="300">
 
@@ -139,7 +139,9 @@ Read [ARCHITECTURE.md](ARCHITECTURE.md), [CONTRIBUTING.md](CONTRIBUTING.md) and 
 This program will not transfer any information to other networked systems unless
 specifically requested by the user or the person installing or operating it.
 
-The only network feature is the update check, which is off by default. When used, it asks
+There are two network features, both off by default. **Sharing the files-moved count** sends
+only that number to `n3trunner.dev`, with no file names or personal data, and you turn it on in
+Settings. **The update check** asks
 GitHub for the latest release and opens the release page in your browser. It never downloads
 anything by itself, and [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement)
 applies to that request. The installer may download Microsoft WebView2 if your PC does not have it.
