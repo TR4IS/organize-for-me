@@ -6,6 +6,7 @@ import { registerIpcHandlers } from './ipc'
 import { AppTray } from './tray'
 import { setupUpdater, triggerCheckForUpdates } from './updater'
 import { getConfig, getRules, checkDailyReset, appendLog } from './config'
+import { offerNewApp } from './bridge'
 
 // Prevent multiple instances — second launch focuses the existing window instead
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
@@ -110,6 +111,12 @@ app.whenReady().then(() => {
 
   registerIpcHandlers(() => mainWindow, organizer, watcher)
   setupUpdater(() => mainWindow)
+  offerNewApp(
+    () => mainWindow,
+    () => watcher.stop(),
+    () => { if (getConfig().autoStartWatcher || getConfig().runInBackground) watcher.start(getConfig().targetPath) },
+    log,
+  )
 
   // Defer watcher auto-start until renderer is fully loaded
   if (config.autoStartWatcher || config.runInBackground) {
