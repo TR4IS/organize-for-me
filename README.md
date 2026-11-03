@@ -14,7 +14,7 @@ It never deletes a file, never overwrites one, and every move can be put back.
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078d4?style=flat-square)](#install)
 [![Built with Rust](https://img.shields.io/badge/Built%20with-Rust-b7410e?style=flat-square)](ARCHITECTURE.md)
 
-[Homepage](https://n3trunner.dev/organizeforme) · [Download](https://github.com/TR4IS/organize-for-me/releases) · [How to use it](#how-to-use-it) · [Safety](#safety) · [Build it](#build-from-source)
+[Homepage](https://n3trunner.dev/organizeforme) · [TikTok](https://www.tiktok.com/@cr4cker.mp4) · [Download](https://github.com/TR4IS/organize-for-me/releases) · [How to use it](#how-to-use-it) · [Safety](#safety) · [Build it](#build-from-source)
 
 <img src="docs/images/receipt.png" alt="The receipt, listing sorted files by time, with totals per folder" width="300">
 
@@ -164,3 +164,5 @@ The bundled fonts, Courier Prime, IBM Plex Sans Arabic, JetBrains Mono and VT323
 
 Built with [Tauri](https://tauri.app). AI tools were used to help build this app.
 Thanks to everyone who used and contributed to versions 1 and 2.
+
+Made by TR4IS. I share my apps and how they're made on TikTok: [@cr4cker.mp4](https://www.tiktok.com/@cr4cker.mp4).
