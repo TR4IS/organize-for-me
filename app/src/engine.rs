@@ -16,7 +16,7 @@ use ledger_platform::watch::Watcher;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 const MS_PER_SECOND: u64 = 1000;
 const DEFAULT_DELAY_SECONDS: u64 = 2;
@@ -25,6 +25,8 @@ const WAIT_RETRY_MS: u64 = 3000;
 const PREVIEW_LIMIT: usize = 8;
 /// How many items a first-run preview counts.
 const PREVIEW_SCAN_LIMIT: usize = 5000;
+/// A slow drive must not keep someone waiting: the preview shows what it found in this time.
+const PREVIEW_TIME_LIMIT: Duration = Duration::from_millis(1200);
 /// Below this much space on the app's own drive, sorting waits. A move itself needs
 /// almost no space, but the records of it do, and no move goes unrecorded.
 const MIN_FREE_BYTES: u64 = 5 * 1024 * 1024;
@@ -104,12 +106,14 @@ pub struct Snapshot {
 }
 
 /// A first-run preview: judged but untouched.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Default)]
 pub struct Preview {
     pub rows: Vec<Item>,
     pub moved: u64,
     pub skip: u64,
     pub held: u64,
+    /// True when the folder was too big to check fully in time.
+    pub partial: bool,
 }
 
 /// The running app.
@@ -225,6 +229,16 @@ impl Engine {
             watcher.set_settle_ms(settle);
         }
         self.save();
+    }
+
+    /// Says in Logs that the app closed unexpectedly last time, and where the details are.
+    pub fn note_crash(&mut self, file: &str) {
+        self.log(
+            "FAIL",
+            "",
+            &format!("closed unexpectedly last time, details in {file}"),
+            None,
+        );
     }
 
     /// Current setting for the window's close button.
@@ -764,18 +778,18 @@ pub fn folder_choice(path: &str) -> FolderChoice {
 
 /// Judges what is in a folder without touching anything.
 pub fn preview(path: &str, memory_free: Options) -> Preview {
-    let mut result = Preview {
-        rows: Vec::new(),
-        moved: 0,
-        skip: 0,
-        held: 0,
-    };
+    let mut result = Preview::default();
+    let started = Instant::now();
     let root = Path::new(path);
     let Ok(entries) = std::fs::read_dir(root) else {
         return result;
     };
     let memory = Memory::default();
-    for (index, entry) in entries.flatten().take(PREVIEW_SCAN_LIMIT).enumerate() {
+    for (index, entry) in entries.flatten().enumerate() {
+        if index >= PREVIEW_SCAN_LIMIT || started.elapsed() > PREVIEW_TIME_LIMIT {
+            result.partial = true;
+            break;
+        }
         let item_path = entry.path();
         let Ok(facts) = inspect(&item_path) else {
             continue;

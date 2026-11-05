@@ -89,11 +89,11 @@ const X = {
 const W = {
   en: { step:(a,b)=>'STEP '+a+' OF '+b, t1:'READ BEFORE FIRST USE', does:'WHAT THIS APP DOES', doesT:'It MOVES files out of the folder you choose and into subfolders. A game or app that expects a file in its old place can stop working.', never:'WHAT IT NEVER DOES', neverT:'It never deletes a file and never overwrites one. Every move can be put back.', missing:'IF A FILE LOOKS MISSING', missingT:'It moved. Open Settings, then Logs, search its name, and void the move.', nothing:'NOTHING HAS MOVED YET.', app:'ORGANIZE FOR ME', aiBuilt:'AI tools were used to help build this app.', resp:'RESPONSIBILITY', respT:'The developer is not responsible for lost or deleted files. This app only moves files. It has no delete function.', t2:'CHOOSE A FOLDER', t2s:'Downloads is the safest choice. Never use a folder that holds games or installed apps.', ok:'OK', risk:'RISK', blocked:'BLOCKED', use:'USE IT ANYWAY', riskOk:'RISK ACCEPTED',
     why:{ games:'Blocked: this looks like a games folder. Moving these files would break your games.', root:'Blocked: this folder holds your whole drive or profile.', system:'Blocked: Windows and installed apps need these files in place.', personal:'Risk: this folder may hold shortcuts and files that other apps expect to find here.', network:'Risk: other people may use this folder, and it can disconnect.' },
-    t3:'PREVIEW RECEIPT', t3s:'Your real files, checked but not touched. Files already here stay where they are. Only files that arrive after you start get sorted.', browse:'CHOOSE ANOTHER FOLDER', wouldMove:'WOULD MOVE IF NEW', leftAlone:'LEFT ALONE', heldYou:'HELD FOR YOU', deleted:'DELETED', t4:'READY TO START', folder:'FOLDER', ack:'I understand that files will move, and I accept this note', start:'START WATCHING', later:'NOT NOW, STAY PAUSED', next:'NEXT', back:'BACK', useFolder:'USE THIS FOLDER', cancel:'CANCEL',
+    partial:'This folder is big, so only its first files are shown.', checking:'Checking the folder…', t3:'PREVIEW RECEIPT', t3s:'Your real files, checked but not touched. Files already here stay where they are. Only files that arrive after you start get sorted.', browse:'CHOOSE ANOTHER FOLDER', wouldMove:'WOULD MOVE IF NEW', leftAlone:'LEFT ALONE', heldYou:'HELD FOR YOU', deleted:'DELETED', t4:'READY TO START', folder:'FOLDER', ack:'I understand that files will move, and I accept this note', start:'START WATCHING', later:'NOT NOW, STAY PAUSED', next:'NEXT', back:'BACK', useFolder:'USE THIS FOLDER', cancel:'CANCEL',
     welcome:'Show first-run guide', _:0 },
   ar: { step:(a,b)=>'الخطوة '+a+' من '+b, t1:'اقرأ قبل أول استخدام', does:'ماذا يفعل التطبيق', doesT:'ينقل الملفات من المجلد الذي تختاره إلى مجلدات فرعية. قد تتوقف لعبة أو برنامج يتوقع وجود ملف في مكانه القديم.', never:'ما لا يفعله أبدًا', neverT:'لا يحذف أي ملف ولا يستبدله. ويمكن التراجع عن كل نقل.', missing:'إذا بدا أن ملفًا اختفى', missingT:'لقد نُقل. افتح الإعدادات ثم السجلات، وابحث عن اسمه، وألغِ النقل.', nothing:'ما انتقل شي للحين.', app:'رتب لي', aiBuilt:'استُخدم الذكاء الاصطناعي للمساعدة في بناء هذا التطبيق.', resp:'المسؤولية', respT:'المطور غير مسؤول عن فقدان الملفات أو حذفها. هذا التطبيق ينقل الملفات فقط، وليس فيه أي وظيفة للحذف.', t2:'اختار مجلد', t2s:'مجلد التنزيلات هو الخيار الأكثر أمانًا. لا تستخدم مجلدًا فيه ألعاب أو برامج مثبتة.', ok:'آمن', risk:'خطر', blocked:'ممنوع', use:'استخدمه رغم ذلك', riskOk:'قبلت الخطر',
     why:{ games:'ممنوع: يبدو أنه مجلد ألعاب، ونقل ملفاته سيعطل ألعابك.', root:'ممنوع: هذا المجلد يضم القرص أو ملفك الشخصي بالكامل.', system:'ممنوع: يحتاج ويندوز والبرامج المثبتة إلى بقاء هذه الملفات مكانها.', personal:'خطر: قد يحتوي على اختصارات وملفات تتوقعها برامج أخرى هنا.', network:'خطر: قد يستخدمه آخرون، وقد ينقطع الاتصال به.' },
-    t3:'فاتورة المعاينة', t3s:'هذه ملفاتك الفعلية، فُحصت دون لمسها. تبقى الملفات الموجودة هنا في مكانها، ولا يُفرز إلا ما يصل بعد البدء.', browse:'اختر مجلد ثاني', wouldMove:'بينتقل لو جديد', leftAlone:'ما بينتقل', heldYou:'تنتظر قرارك', deleted:'حُذف', t4:'جاهزين نبدأ', folder:'المجلد', ack:'أفهم أن الملفات ستُنقل، وأقبل هذه الملاحظة', start:'ابدأ المراقبة', later:'مو الحين، خله واقف', next:'التالي', back:'رجوع', useFolder:'استخدم هذا المجلد', cancel:'إلغاء',
+    partial:'المجلد كبير، فهذي أول ملفاته بس.', checking:'جاري فحص المجلد…', t3:'فاتورة المعاينة', t3s:'هذه ملفاتك الفعلية، فُحصت دون لمسها. تبقى الملفات الموجودة هنا في مكانها، ولا يُفرز إلا ما يصل بعد البدء.', browse:'اختر مجلد ثاني', wouldMove:'بينتقل لو جديد', leftAlone:'ما بينتقل', heldYou:'تنتظر قرارك', deleted:'حُذف', t4:'جاهزين نبدأ', folder:'المجلد', ack:'أفهم أن الملفات ستُنقل، وأقبل هذه الملاحظة', start:'ابدأ المراقبة', later:'مو الحين، خله واقف', next:'التالي', back:'رجوع', useFolder:'استخدم هذا المجلد', cancel:'إلغاء',
     welcome:'ورني دليل البداية', _:0 }
 };
 const FEST = {
@@ -131,14 +131,14 @@ function welcomePanel() {
     const shown = w.blocked !== null ? w.blocked : cur, ready = cur && cur.level !== 'block' && (cur.level === 'ok' || w.warnOk);
     const rows = w.list.map((p, i) => '<button type="button" class="set wf ' + p.level + (i === w.pick ? ' on' : '') + '" data-w="f" data-i="' + i + '"><span><bdi dir="ltr">' + (i === w.pick ? '&gt; ' : '') + html(p.path) + '</bdi></span><b>[ ' + x[p.level === 'ok' ? 'ok' : p.level === 'warn' ? 'risk' : 'blocked'] + ' ]</b></button>').join('');
     const msg = shown && shown.why ? '<div class="risk">' + x.why[shown.why] + (w.blocked === null && cur.level === 'warn' ? (w.warnOk ? '<div class="b">' + x.riskOk + '</div>' : '<div class="acts"><button type="button" data-w="warnok">' + x.use + '</button></div>') : '') + '</div>' : '';
-    return page(x.t2, '<div class="note ink">' + x.t2s + '</div><div class="wsec">' + rows + '</div><div class="acts"><button type="button" data-w="browse">' + x.browse + '</button></div>' + msg + (w.err ? '<div class="risk">' + html(L().tr(w.err)) + '</div>' : ''), w.fromSettings ? btn('cancel', x.cancel) : btn('back', x.back), btn('next', w.fromSettings ? x.useFolder : x.next, !ready));
+    return page(x.t2, (w.busy ? '<div class="note ink b">' + x.checking + '</div>' : '') + '<div class="note ink">' + x.t2s + '</div><div class="wsec">' + rows + '</div><div class="acts"><button type="button" data-w="browse">' + x.browse + '</button></div>' + msg + (w.err ? '<div class="risk">' + html(L().tr(w.err)) + '</div>' : ''), w.fromSettings ? btn('cancel', x.cancel) : btn('back', x.back), btn('next', w.fromSettings ? x.useFolder : x.next, !ready));
   }
   if (w.step === 2) {
     const p = w.preview || { rows: [], moved: 0, skip: 0, held: 0 };
     const rows = p.rows.map(hydrate);
-    return page(x.t3, '<div class="note ink">' + x.t3s + '</div><div class="wsec"><div class="logcount"></div>' + rows.map(e => '<div class="logrow ' + e.status + '"><span class="line"><span class="tm"></span><bdi>' + html(fit(displayName(e), nameCols())) + '</bdi></span><span class="l2"><span>' + (e.status === 'skip' ? '- ' + html(L().tr(e.reason)) : leftOf(e)) + '</span></span></div>').join('') + '</div><div class="sec">' + kv(x.wouldMove, ltr(p.moved)) + kv(x.leftAlone, ltr(p.skip)) + kv(x.heldYou, ltr(p.held)) + kv(x.deleted, ltr(0), 'b') + '</div>', btn('back', x.back), btn('next', x.next));
+    return page(x.t3, '<div class="note ink">' + x.t3s + '</div>' + (p.partial ? '<div class="note">' + x.partial + '</div>' : '') + '<div class="wsec"><div class="logcount"></div>' + rows.map(e => '<div class="logrow ' + e.status + '"><span class="line"><span class="tm"></span><bdi>' + html(fit(displayName(e), nameCols())) + '</bdi></span><span class="l2"><span>' + (e.status === 'skip' ? '- ' + html(L().tr(e.reason)) : leftOf(e)) + '</span></span></div>').join('') + '</div><div class="sec">' + kv(x.wouldMove, ltr(p.moved)) + kv(x.leftAlone, ltr(p.skip)) + kv(x.heldYou, ltr(p.held)) + kv(x.deleted, ltr(0), 'b') + '</div>', btn('back', x.back), btn('next', x.next));
   }
-  return page(x.t4, '<div class="wsec">' + kv(x.folder, '') + '<div class="note ink"><bdi dir="ltr">' + html(cur.path) + '</bdi></div></div>' + (cur.level === 'warn' ? '<div class="risk">' + x.why[cur.why] + '</div>' : '') + (w.err ? '<div class="risk">' + html(L().tr(w.err)) + '</div>' : '') + '<button type="button" class="set" data-w="ack"><span>' + x.ack + '</span><b>[ ' + (w.ack ? 'X' : '&nbsp;') + ' ]</b></button><div class="note ink">' + x.respT + '</div>' + (w.review ? '' : '<div class="acts wlater"><button type="button" data-w="later">' + x.later + '</button></div>'), btn('back', x.back), btn('start', x.start, !w.ack));
+  return page(x.t4, (w.busy ? '<div class="note ink b">' + x.checking + '</div>' : '') + '<div class="wsec">' + kv(x.folder, '') + '<div class="note ink"><bdi dir="ltr">' + html(cur.path) + '</bdi></div></div>' + (cur.level === 'warn' ? '<div class="risk">' + x.why[cur.why] + '</div>' : '') + (w.err ? '<div class="risk">' + html(L().tr(w.err)) + '</div>' : '') + '<button type="button" class="set" data-w="ack"><span>' + x.ack + '</span><b>[ ' + (w.ack ? 'X' : '&nbsp;') + ' ]</b></button><div class="note ink">' + x.respT + '</div>' + (w.review ? '' : '<div class="acts wlater"><button type="button" data-w="later">' + x.later + '</button></div>'), btn('back', x.back), btn('start', x.start, !w.ack));
 }
 const isGroup = e => e.isDir || e.count > 1;
 function displayName(e) {
@@ -392,13 +392,15 @@ app.addEventListener('click', async ev => {
     if (wa === 'holno') { const n = new Date(); S.cfg.dismissed = holidayFor(n) + n.getFullYear(); persist(); }
     if (wa === 'holback') { S.cfg.paper = S.cfg.prevPaper; S.cfg.prevPaper = null; persist(); }
     if (wa === 'holkeep') { S.cfg.prevPaper = null; persist(); }
+    if (w.busy) return;
+    const busy = async work => { w.busy = true; draw(); try { return await work(); } finally { w.busy = false; } };
     if (wa === 'next') {
       w.err = '';
       if (w.fromSettings) {
-        try { applyState(await invoke('choose_folder', { path: w.list[w.pick].path, riskAccepted: w.warnOk })); S.past = 'settings'; }
+        try { applyState(await busy(() => invoke('choose_folder', { path: w.list[w.pick].path, riskAccepted: w.warnOk }))); S.past = 'settings'; }
         catch (e) { w.err = String(e); }
       } else {
-        if (w.step === 1) w.preview = await invoke('preview', { path: w.list[w.pick].path });
+        if (w.step === 1) w.preview = await busy(() => invoke('preview', { path: w.list[w.pick].path }));
         w.step++;
       }
     }
@@ -414,7 +416,7 @@ app.addEventListener('click', async ev => {
     if (wa === 'start' || wa === 'later') {
       try {
         await invoke('save_config', { cfg: S.cfg });
-        applyState(await invoke('start_watching', { path: w.list[w.pick].path, riskAccepted: w.warnOk, paused: wa === 'later' }));
+        applyState(await busy(() => invoke('start_watching', { path: w.list[w.pick].path, riskAccepted: w.warnOk, paused: wa === 'later' })));
         S.past = false;
       } catch (e) { w.err = String(e); }
     }

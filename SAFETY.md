@@ -43,6 +43,9 @@ Tests named here are in `crates/ledger-platform/tests/` and `app/src/engine.rs`,
 `app/src/store.rs` replaces `state.json` in the app's own data folder. It has a linter
 exemption for this, and it never receives a path from outside that folder.
 
+`crash.log` and `crash.seen` sit in the same folder and are only ever appended to. The first
+records why the app crashed; the second counts the crashes already reported in Logs.
+
 ## Not tested on real hardware
 
 - **An unplugged drive:** a lost folder is unit tested, but no real drive was pulled.

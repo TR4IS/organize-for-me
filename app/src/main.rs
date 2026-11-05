@@ -11,6 +11,7 @@ use serde_json::Value;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -23,9 +24,16 @@ use tauri_plugin_dialog::DialogExt;
 const WINDOW_WIDTH: f64 = 328.0;
 const TICK: Duration = Duration::from_millis(500);
 const SHOW_FALLBACK: Duration = Duration::from_secs(5);
+/// Matches `identifier` in tauri.conf.json, which names the app's data folder.
+const APP_ID: &str = "com.tr4is.organizeforme";
+const CRASH_LOG: &str = "crash.log";
+const CRASH_SEEN: &str = "crash.seen";
 const REPO_URL: &str = "https://github.com/TR4IS/organize-for-me";
 
 struct Shared(Mutex<Engine>);
+
+/// The close button's setting, kept apart from the engine so the window can read it without waiting.
+struct CloseToTray(AtomicBool);
 
 struct TrayText {
     open: MenuItem<tauri::Wry>,
@@ -60,48 +68,84 @@ fn folder_choices(app: &AppHandle) -> Vec<FolderChoice> {
     .collect()
 }
 
+// The window's thread must never wait for the engine. The engine can be busy for a while, reading a big folder or
+// sorting a burst of new files while antivirus checks each one, and a window that waits for it shows as
+// "Not Responding". So every command that touches the engine runs on a worker thread, and the window stays free.
+async fn off_window<T: Send + 'static>(
+    work: impl FnOnce() -> T + Send + 'static,
+) -> Result<T, String> {
+    tauri::async_runtime::spawn_blocking(work)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+async fn with_engine<T: Send + 'static>(
+    app: AppHandle,
+    work: impl FnOnce(&mut Engine) -> T + Send + 'static,
+) -> Result<T, String> {
+    off_window(move || {
+        let shared = app.state::<Shared>();
+        let mut engine = engine(&shared);
+        work(&mut engine)
+    })
+    .await
+}
+
 #[tauri::command]
-fn load(app: AppHandle, shared: State<Shared>) -> Loaded {
-    Loaded {
-        state: engine(&shared).snapshot(),
-        choices: folder_choices(&app),
+async fn load(app: AppHandle) -> Result<Loaded, String> {
+    let choices = folder_choices(&app);
+    with_engine(app, move |engine| Loaded {
+        state: engine.snapshot(),
+        choices,
         version: env!("CARGO_PKG_VERSION"),
-    }
+    })
+    .await
 }
 
 #[tauri::command]
-fn get_logs(shared: State<Shared>) -> Vec<LogLine> {
-    engine(&shared).logs()
+async fn get_logs(app: AppHandle) -> Result<Vec<LogLine>, String> {
+    with_engine(app, |engine| engine.logs()).await
 }
 
 #[tauri::command]
-fn save_config(cfg: Value, shared: State<Shared>, tray: State<TrayText>) {
-    let mut engine = engine(&shared);
-    engine.save_config(cfg);
-    set_tray_language(&tray, &engine.language());
+async fn save_config(cfg: Value, app: AppHandle) -> Result<(), String> {
+    let (language, to_tray) = with_engine(app.clone(), move |engine| {
+        engine.save_config(cfg);
+        (engine.language(), engine.closes_to_tray())
+    })
+    .await?;
+    app.state::<CloseToTray>()
+        .0
+        .store(to_tray, Ordering::Relaxed);
+    set_tray_language(&app.state::<TrayText>(), &language);
+    Ok(())
 }
 
 #[tauri::command]
-fn start_watching(
+async fn start_watching(
     path: String,
     risk_accepted: bool,
     paused: bool,
-    shared: State<Shared>,
+    app: AppHandle,
 ) -> Result<Snapshot, String> {
-    let mut engine = engine(&shared);
-    engine.start_watching(&path, risk_accepted, paused)?;
-    Ok(engine.snapshot())
+    with_engine(app, move |engine| {
+        engine.start_watching(&path, risk_accepted, paused)?;
+        Ok(engine.snapshot())
+    })
+    .await?
 }
 
 #[tauri::command]
-fn choose_folder(
+async fn choose_folder(
     path: String,
     risk_accepted: bool,
-    shared: State<Shared>,
+    app: AppHandle,
 ) -> Result<Snapshot, String> {
-    let mut engine = engine(&shared);
-    engine.choose_folder(&path, risk_accepted)?;
-    Ok(engine.snapshot())
+    with_engine(app, move |engine| {
+        engine.choose_folder(&path, risk_accepted)?;
+        Ok(engine.snapshot())
+    })
+    .await?
 }
 
 #[tauri::command]
@@ -112,55 +156,70 @@ async fn pick_folder(app: AppHandle) -> Option<FolderChoice> {
 }
 
 #[tauri::command]
-fn preview(path: String) -> Preview {
-    engine::preview(&path, Options::default())
+async fn preview(path: String) -> Preview {
+    off_window(move || engine::preview(&path, Options::default()))
+        .await
+        .unwrap_or_default()
 }
 
 #[tauri::command]
-fn set_paused(paused: bool, shared: State<Shared>) -> Snapshot {
-    let mut engine = engine(&shared);
-    engine.set_paused(paused);
-    engine.snapshot()
+async fn set_paused(paused: bool, app: AppHandle) -> Result<Snapshot, String> {
+    with_engine(app, move |engine| {
+        engine.set_paused(paused);
+        engine.snapshot()
+    })
+    .await
 }
 
 #[tauri::command]
-fn new_receipt(shared: State<Shared>) -> Snapshot {
-    let mut engine = engine(&shared);
-    engine.new_receipt();
-    engine.snapshot()
+async fn new_receipt(app: AppHandle) -> Result<Snapshot, String> {
+    with_engine(app, |engine| {
+        engine.new_receipt();
+        engine.snapshot()
+    })
+    .await
 }
 
 #[tauri::command]
-fn forget(shared: State<Shared>) -> Snapshot {
-    let mut engine = engine(&shared);
-    engine.forget();
-    engine.snapshot()
+async fn forget(app: AppHandle) -> Result<Snapshot, String> {
+    with_engine(app, |engine| {
+        engine.forget();
+        engine.snapshot()
+    })
+    .await
 }
 
 #[tauri::command]
-fn item_action(id: u64, action: String, bin: Option<String>, shared: State<Shared>) -> Snapshot {
-    let mut engine = engine(&shared);
-    match action.as_str() {
-        "void" => engine.void_item(id),
-        "redo" => engine.redo_item(id),
-        "pick" => engine.pick_item(id, bin.as_deref().unwrap_or("")),
-        "leave" => engine.leave_item(id),
-        "retry" => engine.retry_item(id),
-        _ => {}
-    }
-    engine.snapshot()
+async fn item_action(
+    id: u64,
+    action: String,
+    bin: Option<String>,
+    app: AppHandle,
+) -> Result<Snapshot, String> {
+    with_engine(app, move |engine| {
+        match action.as_str() {
+            "void" => engine.void_item(id),
+            "redo" => engine.redo_item(id),
+            "pick" => engine.pick_item(id, bin.as_deref().unwrap_or("")),
+            "leave" => engine.leave_item(id),
+            "retry" => engine.retry_item(id),
+            _ => {}
+        }
+        engine.snapshot()
+    })
+    .await
 }
 
 #[tauri::command]
-fn undo_log(log_id: u64, shared: State<Shared>) -> bool {
-    engine(&shared).undo_log(log_id)
+async fn undo_log(log_id: u64, app: AppHandle) -> Result<bool, String> {
+    with_engine(app, move |engine| engine.undo_log(log_id)).await
 }
 
 /// Shows a file in Explorer. The path comes from the app's own records.
 #[tauri::command]
-fn show_item(id: u64, shared: State<Shared>) {
+async fn show_item(id: u64, app: AppHandle) {
     use std::os::windows::process::CommandExt;
-    let Some(path) = engine(&shared).item_path(id) else {
+    let Ok(Some(path)) = with_engine(app, move |engine| engine.item_path(id)).await else {
         return;
     };
     let text = path.to_string_lossy();
@@ -171,7 +230,7 @@ fn show_item(id: u64, shared: State<Shared>) {
 }
 
 #[tauri::command]
-fn set_startup(on: bool, app: AppHandle, shared: State<Shared>) -> Result<Snapshot, String> {
+async fn set_startup(on: bool, app: AppHandle) -> Result<Snapshot, String> {
     let autostart = app.autolaunch();
     let result = if on {
         autostart.enable()
@@ -179,9 +238,11 @@ fn set_startup(on: bool, app: AppHandle, shared: State<Shared>) -> Result<Snapsh
         autostart.disable()
     };
     result.map_err(|e| e.to_string())?;
-    let mut engine = engine(&shared);
-    engine.set_startup_setting(on);
-    Ok(engine.snapshot())
+    with_engine(app, move |engine| {
+        engine.set_startup_setting(on);
+        engine.snapshot()
+    })
+    .await
 }
 
 #[tauri::command]
@@ -234,8 +295,8 @@ fn start_drag(window: WebviewWindow) {
 }
 
 #[tauri::command]
-fn close_window(app: AppHandle, window: WebviewWindow, shared: State<Shared>) {
-    if engine(&shared).closes_to_tray() {
+fn close_window(app: AppHandle, window: WebviewWindow, to_tray: State<CloseToTray>) {
+    if to_tray.0.load(Ordering::Relaxed) {
         let _ = window.hide();
     } else {
         app.exit(0);
@@ -271,7 +332,8 @@ fn data_dir(app: &AppHandle) -> Result<PathBuf, String> {
 
 fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle().clone();
-    let engine = Engine::open(&data_dir(&handle)?).map_err(|error| {
+    let dir = data_dir(&handle)?;
+    let mut engine = Engine::open(&dir).map_err(|error| {
         use tauri_plugin_dialog::MessageDialogKind;
         handle
             .dialog()
@@ -282,7 +344,11 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             .blocking_show();
         error
     })?;
+    if new_crash(&dir) {
+        engine.note_crash(CRASH_LOG);
+    }
     let language = engine.language();
+    app.manage(CloseToTray(AtomicBool::new(engine.closes_to_tray())));
     app.manage(Shared(Mutex::new(engine)));
 
     let open = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
@@ -347,7 +413,70 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// True once per crash written to crash.log since the last start. Both files only ever grow: crash.seen gets one
+/// line for each crash already reported.
+fn new_crash(dir: &std::path::Path) -> bool {
+    use std::io::Write;
+    let lines = |name| {
+        std::fs::read_to_string(dir.join(name)).map_or(0, |text: String| text.lines().count())
+    };
+    let crashes = lines(CRASH_LOG);
+    let seen = lines(CRASH_SEEN);
+    if crashes <= seen {
+        return false;
+    }
+    if let Ok(mut out) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(dir.join(CRASH_SEEN))
+    {
+        let _ = out.write_all(
+            "seen
+"
+            .repeat(crashes - seen)
+            .as_bytes(),
+        );
+    }
+    true
+}
+
+/// Where the records live: the app's data folder, or in test runs the folder they name.
+fn records_dir() -> Option<PathBuf> {
+    #[cfg(debug_assertions)]
+    if let Some(dir) = std::env::var_os("OFM_DATA_DIR") {
+        return Some(PathBuf::from(dir));
+    }
+    std::env::var_os("APPDATA").map(|appdata| PathBuf::from(appdata).join(APP_ID))
+}
+
+/// The app aborts on a panic, which leaves no trace. This writes the reason to crash.log first.
+fn log_crashes() {
+    let Some(dir) = records_dir() else {
+        return;
+    };
+    std::panic::set_hook(Box::new(move |info| {
+        use std::io::Write;
+        let seconds = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_secs());
+        let _ = std::fs::create_dir_all(&dir);
+        if let Ok(mut out) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(dir.join(CRASH_LOG))
+        {
+            let _ = writeln!(out, "{seconds} v{} {info}", env!("CARGO_PKG_VERSION"));
+        }
+    }));
+}
+
 fn main() {
+    log_crashes();
+    // Lets a test run check that a crash is written down and reported.
+    #[cfg(debug_assertions)]
+    if std::env::var_os("OFM_TEST_CRASH").is_some() {
+        panic!("test crash");
+    }
     tauri::Builder::default()
         // First, because two copies writing one journal would break its promises.
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
@@ -361,13 +490,7 @@ fn main() {
         .setup(setup)
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
-                let shared = window.state::<Shared>();
-                let to_tray = shared
-                    .0
-                    .lock()
-                    .expect("the engine lock is never held across a panic")
-                    .closes_to_tray();
-                if to_tray {
+                if window.state::<CloseToTray>().0.load(Ordering::Relaxed) {
                     api.prevent_close();
                     let _ = window.hide();
                 }
