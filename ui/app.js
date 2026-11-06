@@ -225,13 +225,21 @@ const SHARE_EVERY_MS = 15 * 60 * 1000;
 const movedTotal = () => S.allTime + tallyOf(S.items).moved;
 async function shareMoved() {
   if (!S.cfg.shareMoved) return;
+  // A damaged saved total counts as all sent: better to under-report than to send moves twice.
+  if (S.cfg.sharedTotal !== undefined && !(Number.isInteger(S.cfg.sharedTotal) && S.cfg.sharedTotal >= 0)) {
+    S.cfg.sharedTotal = movedTotal();
+    persist();
+  }
   const unsent = movedTotal() - (S.cfg.sharedTotal || 0);
   if (unsent <= 0) return;
   try {
     // Sent as plain text, so no extra permission request goes first. Counted only once the server says so.
     const r = await fetch(MOVED_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ moved: unsent }) });
     if (!r.ok) return;
-    S.cfg.sharedTotal = (S.cfg.sharedTotal || 0) + (await r.json()).accepted;
+    // The server may accept part of it; the rest goes next time. A reply outside 0..unsent is ignored.
+    const accepted = (await r.json()).accepted;
+    if (!Number.isInteger(accepted) || accepted < 0 || accepted > unsent) return;
+    S.cfg.sharedTotal = (S.cfg.sharedTotal || 0) + accepted;
     persist();
   } catch (e) { /* No connection: the number waits for the next try. */ }
 }
