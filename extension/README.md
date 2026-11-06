@@ -24,7 +24,7 @@ Without the app installed, the list still works for files that never moved.
 ## Try it
 
 1. Install Organize for Me 3.0.0-beta.6 or newer.
-2. Unzip `OrganizeForMe-extension-0.1.0.zip` from the same release, or use this folder.
+2. Unzip `OrganizeForMe-extension-0.1.1.zip` from the same release, or use this folder.
 3. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and choose the
    unzipped folder.
 4. Pin the extension and click it.

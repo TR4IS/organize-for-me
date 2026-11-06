@@ -28,7 +28,9 @@ button { font: inherit; font-size: 10px; font-weight: 700; letter-spacing: .06em
 button:hover, button:focus-visible { background: var(--hover); outline: none; }
 
 li.empty { display: block; color: var(--dim); text-align: center; padding: 22px 8px 10px; border: 0; }
-.note { color: var(--dim); text-align: center; padding: 10px 4px 0; border-top: 1px dashed var(--hair); font-size: 11px; }
+.note { color: var(--ink); text-align: center; margin: 0 0 8px; padding: 0 4px 10px; border-bottom: 1px dashed var(--hair); font-size: 11px; line-height: 1.5; }
+.note span { display: block; margin-bottom: 6px; }
+.note button { border: 1px solid var(--ink); padding: 5px 10px; }
 .note[hidden] { display: none; }
 
 :root[dir="rtl"] body { font-family: "IBM Plex Sans Arabic", "JetBrains Mono", sans-serif; }

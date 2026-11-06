@@ -5,17 +5,22 @@
 const HOST = 'com.tr4is.organizeforme';
 const LIMIT = 25;
 const REFRESH_MS = 2000;
+const APP_PAGE = 'https://n3trunner.dev/organizeforme/';
 
 const TEXT = {
   en: {
     brand: 'ORGANIZE FOR ME', title: 'YOUR DOWNLOADS', open: 'OPEN', show: 'SHOW FILE',
     moved: folder => `Moved to ${folder}/`, here: 'Not moved', gone: 'Not found', going: 'Downloading…',
-    empty: 'No downloads yet.', noApp: 'Install Organize for Me to see where it moved your files.',
+    empty: 'No downloads yet.', unknown: 'Needs the app to find',
+    noApp: 'Install Organize for Me 3.0.0-beta.6 or newer to see where it moved your files.',
+    getApp: 'GET THE APP',
   },
   ar: {
     brand: 'رتب لي', title: 'تنزيلاتك', open: 'افتح', show: 'ورني الملف',
     moved: folder => `انتقل إلى ${folder}`, here: 'ما انتقل', gone: 'مو موجود', going: 'جاري التنزيل…',
-    empty: 'ما فيه تنزيلات للحين.', noApp: 'ثبّت «رتب لي» عشان تشوف وين نقل ملفاتك.',
+    empty: 'ما فيه تنزيلات للحين.', unknown: 'يحتاج التطبيق عشان يلقاه',
+    noApp: 'ثبّت «رتب لي» 3.0.0-beta.6 أو أحدث عشان تشوف وين نقل ملفاتك.',
+    getApp: 'نزّل التطبيق',
   },
 };
 
@@ -45,14 +50,16 @@ async function load() {
   return { downloads, found: reply && reply.paths, hasApp: Boolean(reply && reply.ok) };
 }
 
-function describe(d, found) {
+function describe(d, found, hasApp) {
   if (d.state === 'in_progress') return { text: t().going };
   if (found && found.moved) {
     return found.exists
       ? { text: t().moved(found.folder || ''), moved: true, canOpen: found.canOpen }
       : { text: t().gone, gone: true };
   }
-  return d.exists ? { text: t().here, canOpen: true } : { text: t().gone, gone: true };
+  if (d.exists) return { text: t().here, canOpen: true };
+  // Without the app there is no way to tell a sorted file from a deleted one.
+  return { text: hasApp ? t().gone : t().unknown, gone: true };
 }
 
 function button(label, onClick) {
@@ -80,7 +87,7 @@ function actions(d, info) {
 }
 
 function draw({ downloads, found, hasApp }) {
-  const rows = downloads.map((d, i) => ({ d, info: describe(d, found && found[i]) }));
+  const rows = downloads.map((d, i) => ({ d, info: describe(d, found && found[i], hasApp) }));
   const key = JSON.stringify([lang, hasApp, rows.map(r => [r.d.id, r.d.state, r.info])]);
   if (key === lastDrawn) return;
   lastDrawn = key;
@@ -116,7 +123,15 @@ function draw({ downloads, found, hasApp }) {
 
   const note = document.getElementById('note');
   note.hidden = hasApp;
-  note.textContent = hasApp ? '' : t().noApp;
+  note.replaceChildren();
+  if (!hasApp) {
+    const text = document.createElement('span');
+    text.textContent = t().noApp;
+    note.append(text, button(t().getApp, () => {
+      chrome.tabs.create({ url: APP_PAGE });
+      window.close();
+    }));
+  }
 }
 
 async function refresh() {
