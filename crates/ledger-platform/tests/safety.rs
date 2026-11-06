@@ -825,3 +825,64 @@ fn every_item_is_accounted_for_and_no_byte_is_lost() {
     assert_eq!(files, items.len() as u64);
     assert_eq!(bytes, bytes_before as u64);
 }
+
+#[test]
+fn a_reader_finds_where_a_moved_file_is_now() {
+    let lab = Lab::new();
+    let d = &lab.watched;
+    let mut journal = lab.journal();
+    let mut moved = |action, from: &Path, to: &Path, finish: bool| {
+        let seq = journal.intend(action, from, to).unwrap();
+        if finish {
+            journal.done(seq).unwrap();
+        } else {
+            journal.abort(seq).unwrap();
+        }
+        seq
+    };
+    moved(Action::Move, &d.join("a.pdf"), &d.join(r"pdf.pdf"), true);
+    moved(
+        Action::Move,
+        &d.join(r"pdf.pdf"),
+        &d.join(r"docs.pdf"),
+        true,
+    );
+    let zip = moved(Action::Move, &d.join("b.zip"), &d.join(r"zip.zip"), true);
+    moved(
+        Action::Undo(zip),
+        &d.join(r"zip.zip"),
+        &d.join("b.zip"),
+        true,
+    );
+    moved(Action::Move, &d.join("c.png"), &d.join(r"png\c.png"), false);
+    drop(journal);
+
+    let before = fs::read(lab.journal_path()).unwrap();
+    let reader = Journal::read(&lab.journal_path()).unwrap();
+    let docs = Some(d.join(r"docs.pdf"));
+    assert_eq!(
+        reader.where_now(&d.join("a.pdf")),
+        docs,
+        "followed both moves"
+    );
+    let upper = PathBuf::from(d.to_string_lossy().to_uppercase()).join("A.PDF");
+    assert_eq!(reader.where_now(&upper), docs, "case does not matter");
+    let long = PathBuf::from(format!(r"\\?\{}", d.join("a.pdf").display()));
+    assert_eq!(
+        reader.where_now(&long),
+        docs,
+        "the long path prefix does not matter"
+    );
+    assert_eq!(reader.where_now(&d.join("b.zip")), None, "put back");
+    assert_eq!(
+        reader.where_now(&d.join("c.png")),
+        None,
+        "the move never happened"
+    );
+    assert_eq!(reader.where_now(&d.join("other.txt")), None, "never moved");
+    assert_eq!(
+        fs::read(lab.journal_path()).unwrap(),
+        before,
+        "reading changed nothing"
+    );
+}

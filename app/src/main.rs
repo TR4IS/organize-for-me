@@ -1,6 +1,7 @@
 //! Organize for Me: the window, the tray and the commands the screens call.
 #![windows_subsystem = "windows"]
 
+mod chrome_host;
 mod engine;
 mod store;
 
@@ -470,8 +471,22 @@ fn log_crashes() {
     }));
 }
 
+/// The app's language, read without changing anything. English when it cannot be read.
+fn saved_language(dir: Option<&std::path::Path>) -> String {
+    dir.and_then(|dir| std::fs::read_to_string(dir.join("state.json")).ok())
+        .and_then(|text| serde_json::from_str::<Value>(&text).ok())
+        .and_then(|state| state["cfg"]["lang"].as_str().map(String::from))
+        .unwrap_or_else(|| "en".into())
+}
+
 fn main() {
     log_crashes();
+    if chrome_host::started_by_chrome() {
+        let records = records_dir();
+        let language = saved_language(records.as_deref());
+        chrome_host::serve(records, language);
+        return;
+    }
     // Lets a test run check that a crash is written down and reported.
     #[cfg(debug_assertions)]
     if std::env::var_os("OFM_TEST_CRASH").is_some() {

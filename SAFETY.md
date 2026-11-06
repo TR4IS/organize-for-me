@@ -46,6 +46,12 @@ exemption for this, and it never receives a path from outside that folder.
 `crash.log` and `crash.seen` sit in the same folder and are only ever appended to. The first
 records why the app crashed; the second counts the crashes already reported in Logs.
 
+## The browser extension
+
+When a browser starts the app for its extension (`app/src/chrome_host.rs`), the app opens the move
+journal for reading only and never opens its window. It can open or show a file only when the
+journal moved that file, and it never starts a program. Only the extension's own ID may connect.
+
 ## Not tested on real hardware
 
 - **An unplugged drive:** a lost folder is unit tested, but no real drive was pulled.

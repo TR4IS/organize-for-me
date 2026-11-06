@@ -1,0 +1,5 @@
+{
+  "name": { "message": "Organize for Me: where's my download?" },
+  "short": { "message": "Organize for Me" },
+  "description": { "message": "Shows where Organize for Me moved each download, with Open and Show buttons that still work." }
+}

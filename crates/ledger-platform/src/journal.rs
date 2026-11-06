@@ -62,11 +62,21 @@ impl Journal {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        let mut file = OpenOptions::new()
+        let file = OpenOptions::new()
             .read(true)
             .append(true)
             .create(true)
             .open(path)?;
+        Journal::load(file, true)
+    }
+
+    /// Reads the journal without changing it, for a second process that only looks things up.
+    /// The returned journal cannot record anything: its file is open for reading only.
+    pub fn read(path: &Path) -> io::Result<Journal> {
+        Journal::load(File::open(path)?, false)
+    }
+
+    fn load(mut file: File, writable: bool) -> io::Result<Journal> {
         let mut raw = Vec::new();
         file.read_to_end(&mut raw)?;
 
@@ -83,7 +93,7 @@ impl Journal {
                 journal.skipped_lines += 1;
             }
         }
-        if raw.last().is_some_and(|b| *b != b'\n') {
+        if writable && raw.last().is_some_and(|b| *b != b'\n') {
             journal.file.write_all(b"\n")?;
             journal.file.sync_data()?;
         }
@@ -174,6 +184,26 @@ impl Journal {
         self.completed.values()
     }
 
+    /// Where a file that was at `original` is now, following every finished move that was not
+    /// put back. None when the journal never moved it. Paths compare without case, as Windows does.
+    pub fn where_now(&self, original: &Path) -> Option<PathBuf> {
+        let mut current = plain(original);
+        let mut after = 0;
+        let mut moved = None;
+        // A file can be moved again, for example when someone picks another folder for it.
+        while let Some(record) = self.completed.values().find(|r| {
+            r.seq > after
+                && r.action == Action::Move
+                && !self.undone.contains(&r.seq)
+                && plain(&r.from) == current
+        }) {
+            after = record.seq;
+            current = plain(&record.to);
+            moved = Some(record.to.clone());
+        }
+        moved
+    }
+
     /// Moves with no recorded result.
     pub fn pending(&self) -> usize {
         self.pending.len()
@@ -244,6 +274,12 @@ impl Journal {
         }
         true
     }
+}
+
+/// A path in a form two spellings of the same file share: no `\?\` prefix, lower case.
+fn plain(path: &Path) -> String {
+    let text = path.to_string_lossy();
+    text.strip_prefix(r"\\?\").unwrap_or(&text).to_lowercase()
 }
 
 fn escape(text: &str) -> String {

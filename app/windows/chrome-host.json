@@ -1,0 +1,7 @@
+{
+  "name": "com.tr4is.organizeforme",
+  "description": "Organize for Me: tells its browser extension where each download is now",
+  "path": "organize-for-me.exe",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://bafeecmlihhlblhcdpabbnlhmblgocdm/"]
+}
