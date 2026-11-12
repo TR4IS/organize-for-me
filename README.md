@@ -16,7 +16,7 @@ It never deletes a file, never overwrites one, and every move can be put back.
 
 [Homepage](https://n3trunner.dev/organizeforme) · [TikTok](https://www.tiktok.com/@cr4cker.mp4) · [Download](https://github.com/TR4IS/organize-for-me/releases) · [How to use it](#how-to-use-it) · [Safety](#safety) · [Build it](#build-from-source)
 
-<img src="docs/images/receipt.png" alt="The receipt, listing sorted files by time, with totals per folder" width="300">
+<img src="docs/images/demo.gif" alt="Twelve downloads land in a Downloads folder; the app moves each into pdf, doc, image, video, sound, zip and exe folders and prints every move on its receipt: 12 in, 12 out, balanced." width="760">
 
 </div>
 
