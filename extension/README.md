@@ -23,11 +23,17 @@ Without the app installed, the list still works for files that never moved.
 
 ## Try it
 
-1. Install Organize for Me 3.0.0-beta.6 or newer.
-2. Unzip `OrganizeForMe-extension-0.1.1.zip` from the same release, or use this folder.
-3. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and choose the
-   unzipped folder.
+1. Install Organize for Me 3.0.0-beta.7 or newer. The installer puts the extension in the app's own
+   folder, at `%LOCALAPPDATA%\Organize for Me\extension`.
+2. In the app, open Settings and click **Browser extension**. It opens that folder.
+3. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and choose that
+   folder.
 4. Pin the extension and click it.
+
+Load it from the app's folder, not from Downloads. The browser runs it straight from the folder you
+pick, so if that folder is moved or deleted, the extension disappears. In the app's folder it is out
+of the way, and each app update brings the matching version. Restart the browser after an update to
+pick it up.
 
 The `key` in `manifest.json` fixes the extension's ID to `bafeecmlihhlblhcdpabbnlhmblgocdm`, which
 is the ID the app trusts. If the extension is published to the Chrome Web Store, add the store's ID

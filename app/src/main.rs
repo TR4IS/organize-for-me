@@ -230,6 +230,24 @@ async fn show_item(id: u64, app: AppHandle) {
         .spawn();
 }
 
+/// Opens the browser extension's folder, which the installer puts beside the app. Kept there,
+/// a cleanup of Downloads can't remove it, and each update brings the matching version.
+#[tauri::command]
+fn show_extension(app: AppHandle) {
+    use std::os::windows::process::CommandExt;
+    let Ok(folder) = app.path().resource_dir().map(|dir| dir.join("extension")) else {
+        return;
+    };
+    if !folder.join("manifest.json").is_file() {
+        return;
+    }
+    let text = folder.to_string_lossy();
+    let plain = text.strip_prefix(r"\\?\").unwrap_or(&text).replace('"', "");
+    let _ = Command::new("explorer")
+        .raw_arg(format!("\"{plain}\""))
+        .spawn();
+}
+
 #[tauri::command]
 async fn set_startup(on: bool, app: AppHandle) -> Result<Snapshot, String> {
     let autostart = app.autolaunch();
@@ -525,6 +543,7 @@ fn main() {
             item_action,
             undo_log,
             show_item,
+            show_extension,
             set_startup,
             open_repo,
             open_releases,
