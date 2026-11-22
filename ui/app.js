@@ -190,11 +190,17 @@ function details(e) {
   if (e.ev.length) h += '<div class="ev">' + e.ev.map(([x, p]) => kv('<span class="dim">' + html(t.tr(x)) + '</span>', ltr(p > 0 ? '+' + p : p))).join('') + kv('<b>' + t.conf + '</b>', '<b>' + ltr(e.conf + '%') + '</b>') + '</div>';
   const btn = (a, x, bin) => '<button type="button" data-tip="' + (a === 'pick' ? (bin === 'random' ? 'pickbin' : 'pickbin') : a) + '" data-a="' + a + '" data-id="' + e.id + '"' + (bin ? ' data-bin="' + bin + '"' : '') + '>' + html(x) + '</button>';
   let acts = '';
-  if (e.status === 'moved') acts = btn('void', t.a.void) + btn('show', t.a.show);
+  if (e.status === 'moved') acts = btn('void', t.a.void) + showBtn(e);
   if (e.status === 'void') acts = btn('redo', t.a.redo);
   if (e.status === 'held') acts = btn('pick', t.a.to(e.bin), e.bin) + btn('pick', t.a.to('random'), 'random') + btn('leave', t.a.leave);
   if (e.status === 'fail') acts = btn('retry', t.a.retry);
   return h + (acts ? '<div class="acts">' + acts + '</div>' : '') + '</div>';
+}
+/* SHOW FILE: the same button in the full list and the small view. It shows FILE GONE for a moment
+   when the file is no longer where the records say. */
+function showBtn(e) {
+  const gone = S.goneId === e.id;
+  return '<button type="button" data-tip="show" data-a="show" data-id="' + e.id + '"' + (gone ? ' disabled' : '') + '>' + html(gone ? LX().putNo : L().a.show) + '</button>';
 }
 function leftOf(e) {
   const t = L().st;
@@ -280,8 +286,14 @@ function settings() {
     '<div class="sign">' + [[x.version, ltr(S.version)], [x.madeBy, '<a href="#" id="repo" dir="ltr">TR4IS</a>']].map(([a, b]) => '<div class="lead"><span>' + a + '</span><span class="dots">' + '.'.repeat(60) + '</span><span class="signv">' + b + '</span></div>').join('') + '<div class="thanks"><bdi dir="ltr">***</bdi> ' + x.thanks + ' <bdi dir="ltr">***</bdi></div><div class="origin"><span lang="ar" dir="rtl">منتج سعودي</span>' + (S.cfg.lang === 'ar' ? '' : '<span>SAUDI PRODUCT</span>') + '</div><div class="note c">' + W[c.lang].respT + '</div><div class="note c">' + W[c.lang].aiBuilt + '</div></div>' +
     '<div class="acts" style="margin-top:auto"><button type="button" id="pastclose">' + t.done + '</button></div></div>';
 }
+let pressAt = 0, drawLater = null;
 function draw() {
   if (S.composing || S.dragging) return;
+  // Waits at most 800 ms, so a press that never ends (focus lost mid-click) can't freeze the screen.
+  if (pressAt && performance.now() - pressAt < 800) {
+    if (!drawLater) drawLater = setTimeout(() => { drawLater = null; draw(); }, 60);
+    return;
+  }
   const gliding = glide ? { to: glide.target, from: glide.el.scrollTop, panel: glide.el.classList.contains('panel') } : null;
   stopGlide();
   const tipKeep = tipFor ? { key: tipKey(tipFor), shown: !!app.querySelector('.tipslip') } : null;
@@ -304,7 +316,7 @@ function draw() {
   const state = S.paused ? t.paused : t.watching, cls = S.cfg.paper === 'thermal' ? '' : S.cfg.paper;
   const shell = (extra, inner) => '<div class="win ' + cls + extra + (S.past === 'welcome' ? ' guide' : '') + '" dir="' + t.dir + '" lang="' + S.cfg.lang + '"' + (extra ? ' style="height:' + (S.past === 'welcome' ? (S.guideH || GUIDE_H) : Math.min(S.cfg.height, screen.availHeight)) + 'px"' : '') + '><div class="edge t"></div>' + inner + (extra ? '<div class="grip" id="grip" data-tip="grip" role="separator" aria-orientation="horizontal" aria-label="' + LX().resize + '" tabindex="0"></div>' : '') + '<div class="edge"></div></div>';
   if (S.view === 'min') {
-    app.innerHTML = shell('', '<div class="bar"><span>' + W[S.cfg.lang].app + '</span><div class="ctl"><button type="button" id="restore" aria-label="Restore">^</button><button type="button" id="close" class="x" aria-label="Close">x</button></div></div><div class="mini">' + kv(state, filesLabel(st.moved, totalB), 'b') + '<div class="minilast">' + (S.items[0] ? '<span class="line"><span class="tm">' + clock(S.items[0].at) + '</span><bdi>' + html(fit(displayName(S.items[0]), nameCols())) + '</bdi></span><span class="l2 ' + S.items[0].status + '"><span>' + leftOf(S.items[0]) + '</span></span>' : '<span class="dim">' + LX().emptyOn + '</span>') + '</div><div class="minic"><span' + (st.held ? ' class="b"' : '') + '>' + t.held + ' ' + ltr(count(st.held)) + '</span><span>' + t.waiting + ' ' + ltr(count(st.wait)) + '</span><span' + (st.fail ? ' class="b"' : '') + '>' + t.failed + ' ' + ltr(count(st.fail)) + '</span></div></div>');
+    app.innerHTML = shell('', '<div class="bar"><span>' + W[S.cfg.lang].app + '</span><div class="ctl"><button type="button" id="restore" aria-label="Restore">^</button><button type="button" id="close" class="x" aria-label="Close">x</button></div></div><div class="mini">' + kv(state, filesLabel(st.moved, totalB), 'b') + '<div class="minilast">' + (S.items[0] ? '<span class="line"><span class="tm">' + clock(S.items[0].at) + '</span><bdi>' + html(fit(displayName(S.items[0]), nameCols())) + '</bdi></span><span class="l2 ' + S.items[0].status + '"><span>' + leftOf(S.items[0]) + '</span>' + (S.items[0].status === 'moved' ? showBtn(S.items[0]) : '') + '</span>' : '<span class="dim">' + LX().emptyOn + '</span>') + '</div><div class="minic"><span' + (st.held ? ' class="b"' : '') + '>' + t.held + ' ' + ltr(count(st.held)) + '</span><span>' + t.waiting + ' ' + ltr(count(st.wait)) + '</span><span' + (st.fail ? ' class="b"' : '') + '>' + t.failed + ' ' + ltr(count(st.fail)) + '</span></div></div>');
   } else {
     const inner = '<div class="bar"><span>' + W[S.cfg.lang].app + '</span>' + ctl + '</div>' +
       '<div class="head">' + (FEST.en[S.cfg.paper] ? '<div class="fest">' + FEST[S.cfg.lang][S.cfg.paper] + '</div>' : '') + '<div class="path" dir="rtl"><bdi dir="ltr">' + html(S.cfg.folder) + '</bdi></div><div class="dim">' + kv(t.receipt + ' ' + ltr('#' + String(S.no).padStart(6, '0')), ltr(S.opened.toLocaleDateString('en-GB'))) + kv(t.opened + ' ' + ltr(clock(S.opened)), state) + '</div></div>' +
@@ -465,7 +477,18 @@ app.addEventListener('click', async ev => {
     const e = S.items.find(x => x.id === +b.dataset.id); if (!e) return;
     const act = b.dataset.a;
     if (act === 'open') S.openId = S.openId === e.id ? null : e.id;
-    else if (act === 'show') { invoke('show_item', { id: e.id }); return; }
+    else if (act === 'show') {
+      // The screen may be older than the records: only a file that is still moved is shown.
+      if (e.status !== 'moved' || S.showing === e.id) return;
+      S.showing = e.id;
+      const found = await invoke('show_item', { id: e.id }).catch(() => false);
+      setTimeout(() => { if (S.showing === e.id) S.showing = null; }, 700);
+      if (found) return;
+      S.goneId = e.id;
+      draw();
+      setTimeout(() => { if (S.goneId === e.id) { S.goneId = null; draw(); } }, 2000);
+      return;
+    }
     else {
       if (act === 'pick' || act === 'leave') { S.skipAnchor = e.id; if (S.openId === e.id) S.openId = null; }
       const action = act === 'void' || act === 'redo' || act === 'pick' || act === 'leave' || act === 'retry' ? act : null;
@@ -522,6 +545,9 @@ function setHeight(px) {
   S.cfg.height = Math.round(Math.min(screen.availHeight, Math.max(floor, px)));
   win.style.height = S.cfg.height + 'px';
 }
+app.addEventListener('pointerdown', ev => { if (ev.button === 0 && ev.target.closest('button')) pressAt = performance.now(); });
+// The click fires right after the release, before the waiting redraw, so it reaches the button it was aimed at.
+for (const type of ['pointerup', 'pointercancel', 'blur']) addEventListener(type, () => { pressAt = 0; });
 app.addEventListener('pointerdown', ev => {
   const g = ev.target.closest('#grip'); if (!g) return;
   ev.preventDefault(); hideTip(); S.dragging = true; g.classList.add('drag');

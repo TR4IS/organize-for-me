@@ -216,18 +216,25 @@ async fn undo_log(log_id: u64, app: AppHandle) -> Result<bool, String> {
     with_engine(app, move |engine| engine.undo_log(log_id)).await
 }
 
-/// Shows a file in Explorer. The path comes from the app's own records.
+/// Shows a file in Explorer. The path comes from the app's own records, read when the button is
+/// pressed, so it is where the file is now even if it moved or was put back after the screen drew.
+/// Returns false when the file is no longer there, so the screen can say so instead of opening
+/// Explorer somewhere unrelated.
 #[tauri::command]
-async fn show_item(id: u64, app: AppHandle) {
+async fn show_item(id: u64, app: AppHandle) -> bool {
     use std::os::windows::process::CommandExt;
     let Ok(Some(path)) = with_engine(app, move |engine| engine.item_path(id)).await else {
-        return;
+        return false;
     };
+    if std::fs::symlink_metadata(&path).is_err() {
+        return false;
+    }
     let text = path.to_string_lossy();
     let plain = text.strip_prefix(r"\\?\").unwrap_or(&text).replace('"', "");
-    let _ = Command::new("explorer")
+    Command::new("explorer")
         .raw_arg(format!("/select,\"{plain}\""))
-        .spawn();
+        .spawn()
+        .is_ok()
 }
 
 /// Opens the browser extension's folder, which the installer puts beside the app. Kept there,

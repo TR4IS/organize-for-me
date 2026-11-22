@@ -225,6 +225,11 @@ button:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
 .mini { padding-block: 8px; display: flex; flex-direction: column; gap: 5px; }
 .minilast { border-block: 1px solid var(--hair); padding-block: 4px; display: block; }
 .minilast .l2 > :only-child { flex: 1 1 auto; min-width: 0; text-align: start; }
+/* SHOW FILE in the small view: same words and colours as the list's button, sized to sit on the line. */
+.minilast .l2 > :first-child:not(:only-child) { flex: 1 1 auto; }
+.minilast .l2 > button { flex: none; min-width: 0; padding: 0 6px; font-weight: 700; color: var(--ink); }
+.minilast .l2 > button:hover { background: var(--ink); color: var(--paper); }
+.minilast .l2 > button[disabled] { color: var(--void); background: none; cursor: default; }
 .minic { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; color: var(--dim); }
 .minic .b { color: var(--void); }
 .lead .cnt { min-width: 0 !important; }
